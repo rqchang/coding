@@ -1,0 +1,238 @@
+---
+title: "Freedom Status Coding"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: 
+    latex_engine: xelatex
+---
+
+Housekeeping
+```{r, eval=FALSE}
+install.packages('tinytex')
+tinytex::install_tinytex()
+```
+```{r}
+rm(list=ls())
+setwd("/Users/changruiquan/Desktop/Harris/2022 Winter/AP/Week 4")
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(stringr)
+library(countrycode)
+```
+
+
+Question 2
+
+(a) In the Freedom House dataset, each country is classified as Free, Partially Free or Not Free. Draw a unique graph showing the share of countries that are classified as Free, Partially Free and Not Free in five-year intervals between 1995 and 2020. Describe your results. Are there any salient patterns?
+```{r}
+data <- read.csv("Country_and_Territory_Ratings_and_Statuses_FIW1973-2021.csv")
+data_a <- data %>%
+  filter(Year == 1995 | Year == 2000 | Year == 2005 | Year == 2010 |
+         Year == 2015 | Year == 2020) %>%
+  select(Year, total_countries, number_of_F, number_of_PF, number_of_NF)
+
+data_a_long <- data_a %>%
+  gather(key = description, value = number_of_countries, number_of_F:number_of_NF) %>%
+  mutate(status = case_when (
+    description == "number_of_F" ~ "Free",
+    description == "number_of_PF" ~ "Partially Free",
+    description == "number_of_NF" ~ "Not Free"
+    )) %>%
+  mutate(status = factor(status, levels = c("Not Free", "Partially Free", "Free")))
+
+ggplot(data_a_long,
+       mapping = aes(x = factor(Year), y = number_of_countries, fill = factor(status))) +
+  geom_bar(stat = 'identity', position = 'fill', width = 0.5) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(x = "Year",
+       y = "Share") +
+  ggtitle("Share of Free/Partially Free/Not Free Countries between 1995 and 2020") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme_bw() + 
+  scale_fill_brewer(palette="Set1") 
+```
+
+In the stacked column chart, it shows the share of countries that are classified as Free, Partially Free, or Not Free in five-year intervals between 1995 and 2020. We can conclude that the share of “Free” countries follows a pattern that increases first from 1995 to 2005, and then decreases from 2005 t0 2020, which is 39.79% in 1995, rising to the peak of 46.35% in 2005, and hitting a new low of 42.05% in 2020. On the contrary, the share of “Not Free” countries shows a trend that declines in the first 10 years and rises in the next 15 years, which is 27.75% in 1995, reaching the minimum point of 23.44% in 2005, and bouncing back to 27.69% in 2020.
+
+
+(b) The previous three-part classification is based on the Freedom in the World (FiW) Index. This index is defined as the average of the Electoral Rights and Civil Liberties components, which are included in the data. Calculate the FiW index for each countryyear and then re-scale such that (i) it ranges from 0 to 1, (ii) larger numbers correspond to more democratic countries. Having done this, create two dummy variables for countries that respectively experience improvement or worsening of the index relative to its value in the previous year. Plot in a single graph, the yearly share of countries that experience gains or losses in the FiW index. Describe your results. Are there any salient patterns?
+```{r}
+rating <- read.csv("Country_ratings.csv")
+data_b <- rating %>%
+  gather(key = indicator, value = score, X1972:X2020.1) %>%
+  rename(country = Year)%>%
+  mutate(year = str_sub(indicator,2,5)) %>%
+  mutate(component = case_when(
+    nchar(indicator) == 5 ~ "CL",
+    nchar(indicator) == 7 ~ "ER"
+  ))%>%
+  select(country, score, year, component)
+
+data_b_wide <- data_b %>%
+  spread(key = component, value = score)
+data_b_wide <- data_b_wide %>%
+  mutate(fiw = (as.numeric(data_b_wide$CL) + as.numeric(data_b_wide$ER))/2) %>%
+  mutate(index = 1- (as.numeric(fiw) - min(fiw, na.rm = T))/(max(fiw, na.rm = T) - min(fiw, na.rm = T)))
+
+data_fiw <- data_b_wide %>%
+  select(country, year, index) %>%
+  mutate(diff = c(0, diff(index))) %>%
+  mutate(improve = ifelse(diff > 0, 1, 0)) %>%
+  mutate(worsen = ifelse(diff < 0, 1, 0))
+
+fiw <- data_fiw %>%
+  group_by(year) %>%
+  na.omit() %>%
+  summarise(share_improve = mean(improve),
+            share_worsen = mean(worsen)) %>%
+  slice(2:48)
+
+ggplot(data = fiw) +
+  geom_bar(aes(x = share_improve, y = year), stat = 'identity', fill = 'brown2', alpha = 0.8) +
+  geom_bar(aes(x = share_worsen, y = year), stat = 'identity', fill = 'darkslategray3', alpha = 0.8) +
+  theme_bw() +
+  labs(x = "Share of Gains or Losses in the FiW Index",
+       y = "Year") +
+  ggtitle("Share of Countries that Experience Gains or Losses in the FiW Index") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+By calculating the FiW index and rescaling it from 0 to 1, we create two dummy variables “improve” and “worsen” indicating countries that experience improvement or worsening of the index relative to its value in the previous year. Then we draw the bar charts of share of gain-/loss-country in the FiW index from 1973 to 2020 respectively, and stack two graphs in one chart. In the graph, the blue part represents the share of countries that experience losses in FiW each year, and red represents the share of countries that experience gains in FiW each year. 
+
+We can conclude that the share of countries with net gains is overall greater than countries with net losses until 2005; while after 2005, more countries experience net losses in the FiW index, and the gap between the share of net losses countries and net gains countries is widening. That means, in general, before 1995, more countries experienced gains in the FiW index; but after 1995 till now, more countries are experiencing losses in the FiW index, showing democracy in retreat to certain extent.
+
+
+(c) Combine the Freedom House dataset with the United Nations Geoscheme. Using the “Region”-level classification in the UN data (i.e., continents), draw a unique graph showing the share of countries that are classified as Free, Partially Free and Not Free in each region in 2005 and 2020. Describe your results. Are there any salient patterns?
+```{r}
+region <- read.csv("UNSD.csv")
+data_c <- read.csv("Country_Ratings_2.csv")
+
+data_c <- data_c %>%
+  mutate(countrycode = countrycode(Country, "country.name", "iso2c"))
+
+region <- region %>%
+  mutate(countrycode = ISO.alpha2.Code) %>%
+  select(Region.Code, Region.Name, Country.or.Area, countrycode) %>%
+  left_join(data_c, by="countrycode") %>%
+  na.omit()
+
+region <- region %>%
+  select(Region.Code, Region.Name, countrycode, Country, X2005.Status, X2020.Status) 
+
+region_status_1 <- region %>%
+  group_by(Region.Name)%>%
+  filter(X2005.Status == "F") %>%
+  summarise(N2005.F = n())
+region_status_2 <- region %>%
+  group_by(Region.Name)%>%
+  filter(X2005.Status == "PF") %>%
+  summarise(N2005.PF = n())
+region_status_3 <- region %>%
+  group_by(Region.Name)%>%
+  filter(X2005.Status == "NF") %>%
+  summarise(N2005.NF = n())
+
+region_status_2005 <- left_join(region_status_1,region_status_2,by="Region.Name")
+region_status_2005 <- left_join(region_status_2005,region_status_3,by="Region.Name")
+region_status_2005_long <- region_status_2005 %>%
+  gather(key = description, value = number_of_countries, N2005.F:N2005.NF) %>%
+  mutate(status = case_when (
+    description == "N2005.F" ~ "Free",
+    description == "N2005.PF" ~ "Partially Free",
+    description == "N2005.NF" ~ "Not Free"))
+
+region_status_4 <- region %>%
+  group_by(Region.Name)%>%
+  filter(X2020.Status == "F") %>%
+  summarise(N2020.F = n())
+region_status_5 <- region %>%
+  group_by(Region.Name)%>%
+  filter(X2020.Status == "PF") %>%
+  summarise(N2020.PF = n())
+region_status_6 <- region %>%
+  group_by(Region.Name)%>%
+  filter(X2020.Status == "NF") %>%
+  summarise(N2020.NF = n())
+
+region_status_2020 <- left_join(region_status_4,region_status_5,by="Region.Name")
+region_status_2020 <- left_join(region_status_2020,region_status_6,by="Region.Name")
+region_status_2020_long <- region_status_2020 %>%
+  gather(key = description, value = number_of_countries, N2020.F:N2020.NF) %>%
+  mutate(status = case_when (
+    description == "N2020.F" ~ "Free",
+    description == "N2020.PF" ~ "Partially Free",
+    description == "N2020.NF" ~ "Not Free"))
+
+region_status_long <- rbind(region_status_2005_long, region_status_2020_long) 
+region_status_long <- region_status_long %>%
+  mutate(year = str_sub(description,2,5)) %>%
+  mutate(number_of_countries = ifelse(is.na(number_of_countries), 0, number_of_countries)) %>%
+  group_by(Region.Name, year) %>%
+  mutate(share_of_countries = number_of_countries/sum(number_of_countries)) %>%
+  mutate(status = factor(status, levels = c("Not Free", "Partially Free", "Free")))
+
+ggplot(data = region_status_long) +
+  geom_bar(aes(x = year, y = share_of_countries, fill = factor(status)), 
+           stat = 'identity', position = 'stack', width = 0.5) +
+  facet_wrap(~Region.Name, nrow=1) +
+  labs(x = "Year",
+       y = "Share") +
+  ggtitle("Share of Countries that are F/PF/NF in Each Region in 2005 and 2020") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme_bw() + 
+  scale_fill_brewer(palette="Set1") 
+
+```
+
+The group stacked bar chart shows the share of countries that are classified as Free, Partially Free, and Not Free in each region in 2005 and 2020. From the chart we can conclude that the status and trend in democratic processes vary across regions. As for status, the proportion of countries that are Free or Partially Free in regions of Americas, Europe, and Oceania is significantly greater than those in Africa and Asia. As for trend, all regions except Oceania share a common trend of democracy in retreat, having a greater share of countries that are Not Free or Partially Free from 2005 to 2020.
+
+
+(d) The UN data includes a variable identifying some countries as least-developed (LDCs). We can use that variable to understand whether recent trends concerning democracy predominantly involve richer or poorer countries. For this purpose, draw a unique graph showing the average value of the FiW index in countries classified as LDCs and in all other countries for all years between 1995 and 2020. Describe your results. Are poorer countries more or less democratic on average than richer ones? Has democracy changed differently in poorer and richer countries over the past 25 years?
+```{r}
+LDC <- read.csv("UNSD.csv")
+LDC <- LDC %>%
+  mutate(ldc = ifelse(Least.Developed.Countries..LDC.=="x", 1, 0)) %>%
+  mutate(countrycode = ISO.alpha2.Code) %>%
+  select(Country.or.Area, countrycode, ldc)
+
+data_d <- data_b_wide %>%
+  mutate(countrycode = countrycode(country, "country.name", "iso2c")) %>%
+  select(country, countrycode, year, fiw, index) %>%
+  left_join(LDC, key = "countrycode")
+
+data_ldc_1 <- data_d %>%
+  group_by(year) %>%
+  filter(ldc == 1) %>%
+  na.omit() %>%
+  summarise(avg_fiw_ldc = mean(fiw))
+data_ldc_2 <- data_d %>%
+  group_by(year) %>%
+  filter(ldc == 0) %>%
+  na.omit() %>%
+  summarise(avg_fiw_others = mean(fiw))
+data_ldc <- left_join(data_ldc_1, data_ldc_2)
+
+ldc_long <- data_ldc %>%
+  gather(key = description, value = fiw, avg_fiw_ldc:avg_fiw_others) %>%
+  mutate(status = ifelse(description == "avg_fiw_ldc", "LDC", "Others")) %>%
+  filter(year > 1994)
+
+ggplot(data = ldc_long) +
+  geom_bar(aes(x = fiw, y = year, fill = factor(status)), 
+           stat = 'identity', position = 'dodge', width = 0.5) +
+  theme_bw() +
+  labs(x = "Average Value of FiW index",
+       y = "Year") +
+  ggtitle("Average Value of FiW Index in LDC/Other Countries between 1995 and 2020") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+The group chart above shows the average value of FiW index in countries classified a LDCs and in all other countries for all years between 1995 and 2020. The original FiW index is defined as the average of the Electoral Rights and Civil Liberties components, which the lower the index, the higher the degree of democracy. From the chart we can see that there is a clear gap of FiW index between least-developed countries and all other countries, where the average FiWs in LDCs are typically above 4.5 in all years, while the average FiWs in all other countries are below 3.5 in all years. However, the overall trend of average FiW index among years is basically the same, having a progress in democracy (FiW index drops) from 1995 to around 2008, and a backsliding in democracy (FiW index rises) from 2008 to 2020.
+
+Thus, we can reach a conclusion that the poorer countries are less democratic on average than richer countries; and democracy has not changed differently in poorer and richer countries over the past 25 years, but showing a common trend instead.
+
+
+
+
