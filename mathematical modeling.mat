@@ -1,0 +1,195 @@
+% grey correlation analysis
+clc,clear
+a=[0,83 0.90 0.99 0.92 0.87 0.95
+326 295 340 287 310 303
+21 38 25 19 27 10
+3.2 2.4 2.2 2.0 0.9 1.7
+0.20 0.25 0.12 0.33 0.20 0.09
+0.15 0.20 0.14 0.09 0.15 0.17
+250 180 300 200 150 175
+0.23 0.15 0.27 0.30 0.18 0.26
+0.87 0.95 0.99 0.89 0.82 0.94]
+
+for i=[1 5:9]%
+a(i,:)=(a(i,:)-min(a(i,:)))/(max(a(i,:))-min(a(i,:)));
+end
+for i=2:4%
+A(i,:)=(max(a(i:))-a(i,:))/(max(a(i,:))-min(a(i,:)));
+end
+
+[m,n]=size(a);
+cankao=max(a')'.  
+t=repmat(cankao,[1,n])-a;
+mmin=min(min(t));   
+mmax=max(max(t));    
+rho=0.5;
+xishu=(mmin+rho*mmax)./(t+rho*mmax).   % grey correlation coeficient
+guanliandu=mean(xishu)
+[gsort,ind]=sort(guanliandu,'descend')
+
+c = [2;3;-5];
+<span style="background-color:rgb(51,204,0);">
+% object function
+</span>
+
+a = [-2,5,-1;1,3,1];
+<span style="color:#33cc00;">
+</span>
+<span style="color:#009900;">
+<strong>% coefficients of the inequality function (less equal to) </strong></span><span
+style="color:#33cc00;">）
+</span>
+
+b = [-10,12];
+<span style="color:#33ff33;">
+</span>
+<strong>
+<span style="color:#009900;">
+% matrix of the inequality function
+</span>
+</strong>
+
+aeq = [0.177,0.048,0.775];
+<span style="color:#33ff33;">
+</span>
+<span style="color:#009900;">
+<strong>
+% coefficients of the equation
+</strong>
+</span>
+
+deq = 7;
+<span style="color:#009900;">
+<strong>
+% matrix of the coef
+</strong>
+</span>
+
+x = linprog(-c,a,b,aeq,deq,zeros(3,1))
+value = c'*x
+
+% simplex model
+clc,clf,clear;
+omega=10;
+hold on
+Z_r=[];
+Z_i=[];
+Z_ci=[];
+i=1;
+j=complex(0,1);
+rho_0=1.213;
+c_0=343;
+D=0.02;
+d=0.00054;
+t=0.00029;
+p=0.014314;
+eta= 1.814e-5;
+
+Z_0=rho_0*c_0;
+for omega=2500:100:12000
+k=(d/2)*sqrt(rho_0*omega/eta);
+Z_r(i)=32*eta*t/d^2*((sqrt(1+k^2/32))/p+(sqrt(2)*k*d)/(32*p*t));
+Z_i(i)=rho_0*omega*(t/p*(1+1/(sqrt(9+k^2/2)))+0.85*d/p);
+Z_ci(i)=rho_0*c_0*cot(omega/c_0*D);
+f=omega/(2*pi);
+plot(f,Z_r(i),'r*');
+plot(f,Z_i(i)+Z_ci(i),'b.');
+% plot(f,Z_ci(i),'k*');
+end
+hold off
+
+x(1)=0.000363733;
+x(2)=0.000229044;
+x(3)=0.002108192;
+x(4)=0.030144987;
+
+omega=1700*2*pi;
+j=complex(0,1);
+rho_0=1.213;    % air density
+c_0=343;
+p=(pi/4*x(2)^2)/(x(3)^2);
+eta= 1.814e-5;
+Z_0=rho_0*c_0;
+
+y(1)=(2*x(4)*0.0004+x(1)*x(3)+0.001*x(3))/x(3)^2;
+% k=(x(2)/2)*sqrt(rho_0*omega/eta);
+% y(2)=32*eta*x(1)/x(2)^2*((sqrt(1+k^2/32))/p+(sqrt(2)*k*x(2))/(32*p*x(1)));
+% Z_i=rho_0*omega*(x(1)/p*(1+1/(sqrt(9+k^2/2)))+0.85*x(2)/p);
+% Z_ci=rho_0*c_0*cot(omega/c_0*0.035);
+% y(2)=Z_i+Z_ci;
+
+B_0=besselj(0,x(2)*sqrt(rho_0*omega/(4*eta))*sqrt(-j));
+B_1=besselj(1,x(2)*sqrt(rho_0*omega/(4*eta))*sqrt(-j));
+Z_cn=-j*Z_0*cot((omega/c_0)*x(4));
+Z_mn=(j*omega*rho_0*x(1)/p)*(1-(2*B_1/(x(2)*sqrt(rho_0*omega/(4*eta))*B_0)))^(-1)+(sqrt(2)*eta*x(2)*sqrt(rho_0*omega/(4*eta)))/(p*x(2))+j*
+(0.85*omega*rho_0*x(2)/p);
+Z_T=Z_cn+Z_mn;
+fitnessfcn=@f;
+nvars=4;
+Ib=[0.0002,0.0002,0.002,0.03];
+ub=[0.001,0.001,0.01,0.04];
+A=[];
+b=[];
+Aeq=[];
+beq=[];
+options=gaoptimset('paretoFraction',0.3,'populationsize',250,'generations',500,'stallGenLimit',500,'TolFun',1e-10,'PlotFcns',@gaplotpareto);
+[x,fval]=gamultiobj(fitnessfcn,nvars,A,b,Aeq,beq,Ib,ub,options);
+
+xy900=[];
+xy1200=[];
+xy1500=[];
+xy1800=[];
+for i=1:75
+xy900(i)=ynew900(i)/x900(i);
+xy1200(i)=ynew1200(i)/x1200(i);
+xy1500(i)=ynew1500(i)/x1500(i);
+xy1800(i)=ynew1800(i)/x1800(i);
+end
+
+[m900,index900]=max(xy900)
+[m1200,index1200]=max(xy1200)
+[m1500,index1500]=max(xy1500)
+[m1800,index1800]=max(xy1800)
+
+eta= 1.814e-5;
+c_0=343;
+gamma=1.4;
+P_s=101325;
+hold on
+a=0.001;
+b=0.001;
+d=20/(sqrt(pi));
+for u_0=170:10:340
+lamda_r=(64*eta*u_0*c_0^2)/((2*sqrt(a*b/pi))*gamma*P_s*u_0^2);
+lamda_s=(64*eta*u_0*c_0^2)/(((2*a*b)/(a+b))*gamma*P_s*u_0^2);
+plot(u_0,lamda_r,'r*',u_0,lamda_s,'b.')
+end
+hold off
+
+clc,clear
+a=[0.83 0.90 0.99 0.92 0.87 0.95
+326 295 340 287 310 303
+21 38 25 19 27 10
+3.2 2.4 2.2 2.0 0.9 1.7
+0.20 0.25 0.12 0.33 0.20 0.09
+0.15 0.20 0.14 0.09 0.15 0.17
+250 180 300 200 150 175
+0.23 0.15 0.27 0.30 0.18 0.26
+0.87 0.95 0.99 0.89 0.82 0.94]
+
+for i=[1 5:9]
+a(i,:)=(a(i,:)-min(a(i,:)))/(max(a(i,:))-min(a(i,:)));
+end
+for i=2:4
+a(i,:)=(max(a(i,:))-a(i,:))/(max(a(i,:))-min(a(i,:)));
+end
+
+[m,n]=size(a);
+cankao=max(a')'
+t=repmat(cankao,[1,n])-a;
+mmin=min(min(t));
+mmax=max(max(t));
+rho=0.5;
+xishu=(mmin+rho*mmax)./(t+rho*mmax)
+guanliandu=mean(xishu)
+[gsort,ind]=sort(guanliandu,'descend')
