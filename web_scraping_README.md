@@ -15,7 +15,7 @@ This project conducts web scraping utilizing Python to get detailed information 
 
 Packages used: urllib.request, BeautifulSoup, Pandas, RE. 
 
-Another multithreading version which processes more efficiently is attached (https://github.com/rqchang/coding/blob/main/webscrap_multithread.py). The deliverable spreadsheet is named as 'results.csv'.
+Another multithreading version which processes more efficiently is attached (https://github.com/rqchang/coding/blob/main/webscrap_multithread.py).
 
 ## Project Deliverable
 
