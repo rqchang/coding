@@ -1,8 +1,8 @@
-# Task 1B: Web Scraping - American Economic Review (Redux)
+# Web Scraping - American Economic Review (Redux)
 
 ## Project Description
 
-This project is the advanced version of Task 1A, which contains more detailed information for each article in every issue available on the American Economic Review website (https://www.aeaweb.org/journals/aer/issues), including:
+This project conducts web scraping utilizing Python to get detailed information for each article in every issue available on the American Economic Review website (https://www.aeaweb.org/journals/aer/issues), including:
 
 - 📖 Volume and issue number
 - 📅 Issue-date information
@@ -48,7 +48,7 @@ Through web scrapping the provided urls, issue-level data is stored in a .csv fi
 
 ## Multithreading Version
 
-Besides the original code, I also provide a multithreading version, which could greatly save the processing time (from approximately an hour to only 5 minutes). The code is names as 'task1b_ruiquan_chang_multithread.py'.
+Besides the original code, I also provide a multithreading version, which could greatly save the processing time (from approximately an hour to only 5 minutes). The code is names as 'ruiquan_chang_multithread.py'.
 
 ## Author Information
 
