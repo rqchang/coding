@@ -13,7 +13,9 @@ This project conducts web scraping utilizing Python to get detailed information 
 - 🏷 The article's JEL code(s)
 - 🗂 The article's JEL coed description(s)
 
-The code ('task1b_ruiquan_chang.py') is based on Python, using packages including urllib.request, BeautifulSoup, Pandas, RE. Another multithreading version which processes more efficiently is attached ('task1b_ruiquan_chang_multithread.py'). The deliverable spreadsheet is named as 'task1b_ruiquan_chang.csv'.
+Packages used: urllib.request, BeautifulSoup, Pandas, RE. 
+
+Another multithreading version which processes more efficiently is attached (). The deliverable spreadsheet is named as 'results.csv'.
 
 ## Project Deliverable
 
