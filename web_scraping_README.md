@@ -15,7 +15,7 @@ This project conducts web scraping utilizing Python to get detailed information 
 
 Packages used: urllib.request, BeautifulSoup, Pandas, RE. 
 
-Another multithreading version which processes more efficiently is attached (). The deliverable spreadsheet is named as 'results.csv'.
+Another multithreading version which processes more efficiently is attached (https://github.com/rqchang/coding/blob/main/webscrap_multithread.py). The deliverable spreadsheet is named as 'results.csv'.
 
 ## Project Deliverable
 
@@ -44,13 +44,13 @@ Parse specific article page (e.g., https://www.aeaweb.org/articles?id=10.1257/ae
 
 Save all web scrapint results to .cvs file, including 'volume', 'issue_date', 'article_title', 'authors', 'page_numbers', 'article_link', 'jel_code', 'jel_description'.
 
-Through web scrapping the provided urls, issue-level data is stored in a .csv file. The deliverable spreadsheet ('task1b_ruiquan_chang.csv') is structured as follows:
+The provided urls, issue-level data is stored in a .csv file. The deliverable spreadsheet ('results.csv') is structured as follows:
 
-<img width="800" alt="image" src="https://user-images.githubusercontent.com/102669789/193464634-3e7efbd8-d630-4423-9fcb-cb79648f8bb3.png">
+<img width="910" alt="image" src="https://user-images.githubusercontent.com/102669789/209400294-003f87a2-ea40-4d8a-a23a-0079278c0e76.png">
 
 ## Multithreading Version
 
-Besides the original code, I also provide a multithreading version, which could greatly save the processing time (from approximately an hour to only 5 minutes). The code is names as 'ruiquan_chang_multithread.py'.
+Besides the original code, I also provide a multithreading version (https://github.com/rqchang/coding/blob/main/webscrap_multithread.py), which could greatly save the processing time from approximately an hour to only 5 minutes.
 
 ## Author Information
 
