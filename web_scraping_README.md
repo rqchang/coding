@@ -1,4 +1,4 @@
-# Web Scraping - American Economic Review (Redux)
+# Web Scraping - American Economic Review
 
 ## Project Description
 
