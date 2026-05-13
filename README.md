@@ -24,12 +24,13 @@ R is used solely for data access and import. All sample construction, variable c
 | Order | Script | Language | Stage | Key Output |
 |------:|--------|----------|-------|------------|
 | 1 | `utils/wrds_credentials.R` | R | Utility | WRDS connection helper |
-| 2 | `data_import/import_crsp_msi.R` | R | Import | `data/raw/crsp_msi.csv`, `data/temp/msi_monthly.dta` |
-| 3 | `data_import/import_sdc.R` | R | Import | `data/raw/sdc_ni.csv` |
-| 4 | `data_import/import_crsp_auxiliaries.R` | R | Import | `data/raw/crsp_stocknames.csv` |
-| 5 | `data_setup/clean_data.do` | Stata | Cleaning | `data/processed/regression_panel.dta`, `data/processed/plot_data.dta` |
-| 6 | `analyses/replicate_Bernstein.do` | Stata | Analysis | `output/figure2.pdf`, `output/table2_{full,event}.tex`, `output/table6_{full,event}.tex`, `data/final/reg_final.dta` |
-| 7 | `analyses/extend_Bernstein.do` | Stata | Analysis | `output/task2_{full,event}.tex`, `output/task3_exclusion.tex` |
+| 2 | `config.do` | Stata | Utility | Sets `$BASEDIR` and all derived path globals |
+| 3 | `data_import/import_crsp_msi.R` | R | Import | `data/raw/crsp_msi.csv`, `data/temp/msi_monthly.dta` |
+| 4 | `data_import/import_sdc.R` | R | Import | `data/raw/sdc_ni.csv` |
+| 5 | `data_import/import_crsp_auxiliaries.R` | R | Import | `data/raw/crsp_stocknames.csv` |
+| 6 | `data_setup/clean_data.do` | Stata | Cleaning | `data/processed/regression_panel.dta`, `data/processed/plot_data.dta` |
+| 7 | `analyses/replicate_Bernstein.do` | Stata | Analysis | `output/figure2.pdf`, `output/table2_{full,event}.tex`, `output/table6_{full,event}.tex`, `data/final/reg_final.dta` |
+| 8 | `analyses/extend_Bernstein.do` | Stata | Analysis | `output/task2_{full,event}.tex`, `output/task3_exclusion.tex` |
 
 ---
 
@@ -39,19 +40,23 @@ R is used solely for data access and import. All sample construction, variable c
 
 Reads WRDS username and password from the `.Renviron` file and returns them as a named list. Called by all import scripts; credentials are never hard-coded.
 
-### Step 2 — `data_import/import_crsp_msi.R`
+### Step 2 — `config.do`
+
+Defines the single base-path global and all derived directory globals used by every Stata script. To redirect the pipeline to a new machine, edit only the `BASEDIR` line in this file. Each Stata script sources `config.do` automatically at startup, so no manual path edits are needed in the analysis scripts themselves.
+
+### Step 3 — `data_import/import_crsp_msi.R`
 
 Connects to the WRDS PostgreSQL server via `RPostgres` and downloads the CRSP Monthly Stock Index file (`crsp.msi`), retaining the value-weighted return including distributions (`vwretd`) for the full sample period. Saves a raw CSV to `data/raw/crsp_msi.csv` and a Stata-ready `.dta` file to `data/temp/msi_monthly.dta` for use in the analysis scripts.
 
-### Step 3 — `data_import/import_sdc.R`
+### Step 4 — `data_import/import_sdc.R`
 
-Downloads SDC Platinum new-issues data (`tr_sdc_ni`) from WRDS, covering all U.S. IPO filings. Saves raw records to `data/raw/sdc_ni.csv`. The cleaning script (Step 5) applies all sample filters.
+Downloads SDC Platinum new-issues data (`tr_sdc_ni`) from WRDS, covering all U.S. IPO filings. Saves raw records to `data/raw/sdc_ni.csv`. The cleaning script (Step 6) applies all sample filters.
 
-### Step 4 — `data_import/import_crsp_auxiliaries.R`
+### Step 5 — `data_import/import_crsp_auxiliaries.R`
 
 Downloads the CRSP historical stock-name file (`crsp.stocknames`) used to match SDC deals to CRSP permnos via 6-digit CUSIP. Saves to `data/raw/crsp_stocknames.csv`.
 
-### Step 5 — `data_setup/clean_data.do`
+### Step 6 — `data_setup/clean_data.do`
 
 Constructs the analysis dataset from the raw imports and KPSS patent files. Key steps:
 
@@ -64,7 +69,7 @@ Constructs the analysis dataset from the raw imports and KPSS patent files. Key 
 **Inputs:** `data/raw/sdc_ni.csv`, `data/raw/crsp_stocknames.csv`, `data/raw/crsp_msi.csv`, `KPSS_2024.csv`, `Match_patent_permco_permno_2024.csv`  
 **Outputs:** `data/processed/regression_panel.dta`, `data/processed/plot_data.dta`
 
-### Step 6 — `analyses/replicate_Bernstein.do`
+### Step 7 — `analyses/replicate_Bernstein.do`
 
 Replicates Figure 2 and Tables II and VI of Bernstein (2015) in two sample cuts: the patent-active event-window sample (`pre_n_patents + post_n_patents > 0`) and the full permno-matched sample.
 
@@ -72,12 +77,12 @@ Replicates Figure 2 and Tables II and VI of Bernstein (2015) in two sample cuts:
 - **Table II (first stage)**: eight-column LPM of IPO completion on three instrument variants (2-month VW return, full book-building return, binary no-drop indicator), with and without controls, full sample and pre-2000 subsample
 - **Table VI (second stage)**: OLS, reduced-form, and 2SLS regressions of post-IPO average citation-scaled quality (`post_avg_sc`) on IPO completion, instrumenting with the 2-month VWRETD
 
-Also saves `data/final/reg_final.dta`, the fully merged and labeled regression dataset used by Step 7.
+Also saves `data/final/reg_final.dta`, the fully merged and labeled regression dataset used by Step 8.
 
 **Inputs:** `data/processed/regression_panel.dta`, `data/processed/plot_data.dta`  
 **Outputs:** `output/figure2.pdf`, `output/table2_{full,event}.tex`, `output/table6_{full,event}.tex`, `data/final/reg_final.dta`
 
-### Step 7 — `analyses/extend_Bernstein.do`
+### Step 8 — `analyses/extend_Bernstein.do`
 
 Extends the replication with two original tasks.
 
@@ -94,6 +99,7 @@ Extends the replication with two original tasks.
 
 ```
 code/
+├── config.do
 ├── utils/
 │   └── wrds_credentials.R
 ├── data_import/
